@@ -30,17 +30,18 @@ app.get('/api/hello', function(req, res) {
 app.post('/api/shorturl', (req, res) => {
   const originalUrl = req.body.url;
 
-  // Check if the URL is valid
-  const urlPattern = /^(https?:\/\/)(www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(\/[^\s]*)?$/;
-  if (!urlPattern.test(originalUrl)) {
-    return res.json({ error: 'invalid url' });
+  // Validate URL format
+  let url;
+  try {
+    url = new URL(originalUrl);
+  } catch (_) {
+    return res.json({ error: 'invalid url' }); // Invalid URL format
   }
 
-  // Extract hostname and verify it using dns.lookup
-  const url = new URL(originalUrl);
+  // Verify the hostname using dns.lookup
   dns.lookup(url.hostname, (err) => {
     if (err) {
-      return res.json({ error: 'invalid url' });
+      return res.json({ error: 'invalid url' }); // DNS lookup failed
     }
 
     // Store the original URL and create a short URL
@@ -51,7 +52,7 @@ app.post('/api/shorturl', (req, res) => {
   });
 });
 
-// Redirect from /api/shorturl/<short_url> to the original URL
+// Redirect from /api/shorturl/:shorturl to the original URL
 app.get('/api/shorturl/:shorturl', (req, res) => {
   const shortUrl = req.params.shorturl;
   const originalUrl = urlDatabase[shortUrl];
